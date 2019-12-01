@@ -1,4 +1,3 @@
-use math::round::floor;
 use std::vec::Vec;
 
 #[aoc_generator(day1)]
@@ -9,7 +8,7 @@ pub fn mass_parser(input: &str) -> Vec<i64> {
 }
 
 fn fuel_for_mass(mass: i64) -> i64 {
-    let fuel = (floor(mass as f64 / 3., 0) - 2.) as i64;
+    let fuel = ((mass as f64 / 3.).floor() - 2.) as i64;
     if fuel < 0 {
         return 0;
     }
@@ -22,7 +21,7 @@ pub fn day1_part1(masses: &Vec<i64>) -> i64 {
     let mut fuel: i64 = 0;
 
     for mass in masses {
-        fuel += (floor(*mass as f64 / 3., 0) - 2.) as i64;
+        fuel += ((*mass as f64 / 3.).floor() - 2.) as i64;
     }
     
     fuel
