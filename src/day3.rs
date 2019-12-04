@@ -89,7 +89,7 @@ impl Point {
   }
 }
 
-pub fn find_intersections(wires: &Vec<Wire>) -> (Vec<(Point, u64)>, HashMap<Point, u64>) {
+pub fn find_intersections(wires: &Vec<Wire>) -> Vec<(Point, u64)> {
   let mut visited = HashMap::new();
   let mut intersections = Vec::new();
 
@@ -107,13 +107,13 @@ pub fn find_intersections(wires: &Vec<Wire>) -> (Vec<(Point, u64)>, HashMap<Poin
     }
   }
 
-  (intersections, visited)
+  intersections
 }
 
 #[test]
 pub fn test_find_intersections() {
   {
-    let (intersections, _visited) = find_intersections(
+    let intersections = find_intersections(
       &wire_parser("R8,U5,L5,D3\nU7,R6,D4,L4")
     );
 
@@ -127,7 +127,7 @@ pub fn test_find_intersections() {
   }
 
   {
-    let (intersections, _visited) = find_intersections(
+    let intersections = find_intersections(
       &wire_parser("R75,D30,R83,U83,L12,D49,R71,U7,L72\nU62,R66,U55,R34,D71,R55,D58,R83")
     );
 
@@ -149,7 +149,7 @@ pub fn test_find_intersections() {
 
 #[aoc(day3, part1)]
 pub fn find_closest_intersection(wires: &Vec<Wire>) -> u64 {
-  let (intersections, _visited) = find_intersections(wires);
+  let intersections = find_intersections(wires);
 
   let mut closest_distance = std::u64::MAX;
   for (intersection, _) in intersections {
@@ -258,7 +258,7 @@ pub fn test_trace_wire() {
 
 #[aoc(day3, part2)]
 pub fn find_shortest_intersection(wires: &Vec<Wire>) -> u64 {
-  let (intersections, _visited) = find_intersections(wires);
+  let intersections = find_intersections(wires);
 
   let mut shortest_distance = std::u64::MAX;
   for (_intersection, distance) in intersections {  
