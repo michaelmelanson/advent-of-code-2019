@@ -146,11 +146,10 @@ impl <'a> Machine<'a> {
         }
     }
 
-    pub fn step(&mut self) -> (Instruction, Option<Action>) {
-        let instruction = self.next_instruction();
+    pub fn step(&mut self) -> Option<Action> {
         let mut action = None;
 
-        match &instruction {
+        match self.next_instruction() {
             Instruction::Add(lhs, rhs, output) => {
                 let lhs = lhs.resolve(&self.memory);
                 let rhs = rhs.resolve(&self.memory);
@@ -165,7 +164,7 @@ impl <'a> Machine<'a> {
 
             Instruction::Input(output) => {
                 let value = self.read_input();
-                self.write(value, output);
+                self.write(value, &output);
             },
 
             Instruction::Output(value) => {
@@ -195,9 +194,9 @@ impl <'a> Machine<'a> {
                 let rhs = rhs.resolve(&self.memory);
 
                 if lhs < rhs {
-                    self.write(1, output);
+                    self.write(1, &output);
                 } else {
-                    self.write(0, output);
+                    self.write(0, &output);
                 }
             },
 
@@ -206,9 +205,9 @@ impl <'a> Machine<'a> {
                 let rhs = rhs.resolve(&self.memory);
 
                 if lhs == rhs {
-                    self.write(1, output);
+                    self.write(1, &output);
                 } else {
-                    self.write(0, output);
+                    self.write(0, &output);
                 }
             },
 
@@ -218,7 +217,7 @@ impl <'a> Machine<'a> {
             },
         }
 
-        (instruction, action)
+        action
     }
 }
 
@@ -227,20 +226,11 @@ pub fn execute_program(memory: &mut Vec<isize>, input: &Vec<isize>) -> Vec<isize
     let mut output = Vec::new();
     
     'main: loop {
-        let (instruction, action) = machine.step();
-        println!("Instruction: {:?}", instruction);
+        let action = machine.step();
 
         match action {
-            Some(Action::Halt) => {
-                println!("Halting");
-                break 'main;
-            },
-
-            Some(Action::Output(value)) => {
-                println!("Output: {}", value);
-                output.push(value);
-            },
-
+            Some(Action::Halt) => break 'main,
+            Some(Action::Output(value)) => output.push(value),
             None => {}
         }
     }
