@@ -37,6 +37,10 @@ enum Instruction {
     Multiply(Parameter, Parameter, Parameter),
     Input(Parameter),
     Output(Parameter),
+    JumpIfTrue(Parameter, Parameter),
+    JumpIfFalse(Parameter, Parameter),
+    LessThan(Parameter, Parameter, Parameter),
+    Equals(Parameter, Parameter, Parameter),
     Halt
 }
 
@@ -66,6 +70,10 @@ impl <'a> Machine<'a> {
         let value = self.memory[self.ip];
         self.ip += 1;
         value
+    }
+
+    fn jump(&mut self, address: usize) {
+        self.ip = address;
     }
 
     fn read_input(&mut self) -> isize {
@@ -111,6 +119,28 @@ impl <'a> Machine<'a> {
                 Parameter::new(first_mode, self.read())
             ),
 
+            5 => Instruction::JumpIfTrue(
+                Parameter::new(first_mode, self.read()),
+                Parameter::new(second_mode, self.read())
+            ),
+
+            6 => Instruction::JumpIfFalse(
+                Parameter::new(first_mode, self.read()),
+                Parameter::new(second_mode, self.read())
+            ),
+
+            7 => Instruction::LessThan(
+                Parameter::new(first_mode, self.read()),
+                Parameter::new(second_mode, self.read()),
+                Parameter::new(third_mode, self.read())
+            ),
+
+            8 => Instruction::Equals(
+                Parameter::new(first_mode, self.read()),
+                Parameter::new(second_mode, self.read()),
+                Parameter::new(third_mode, self.read())
+            ),
+
             99 => Instruction::Halt,
             _ => unimplemented!()
         }
@@ -141,6 +171,47 @@ impl <'a> Machine<'a> {
             Instruction::Output(value) => {
                 action = Some(Action::Output(value.resolve(&self.memory)));
             }
+
+            Instruction::JumpIfTrue(value, target) => {
+                let value = value.resolve(&self.memory);
+
+                if value != 0 {
+                    let target = target.resolve(&self.memory) as usize;
+                    self.jump(target);
+                }
+            },
+
+            Instruction::JumpIfFalse(value, target) => {
+                let value = value.resolve(&self.memory);
+
+                if value == 0 {
+                    let target = target.resolve(&self.memory) as usize;
+                    self.jump(target);
+                }
+            },
+
+            Instruction::LessThan(lhs, rhs, output) => {
+                let lhs = lhs.resolve(&self.memory);
+                let rhs = rhs.resolve(&self.memory);
+
+                if lhs < rhs {
+                    self.write(1, output);
+                } else {
+                    self.write(0, output);
+                }
+            },
+
+            Instruction::Equals(lhs, rhs, output) => {
+                let lhs = lhs.resolve(&self.memory);
+                let rhs = rhs.resolve(&self.memory);
+
+                if lhs == rhs {
+                    self.write(1, output);
+                } else {
+                    self.write(0, output);
+                }
+            },
+
 
             Instruction::Halt => {
                 action = Some(Action::Halt)
@@ -198,3 +269,12 @@ pub fn diagnostic(program: &Vec<isize>) -> String {
 
     format!("{:?}", output)
 }
+
+
+#[aoc(day5, part2)]
+pub fn thermal(program: &Vec<isize>) -> String {
+    let output = execute_program(&mut program.clone(), &vec![5]);
+
+    format!("{:?}", output)
+}
+
