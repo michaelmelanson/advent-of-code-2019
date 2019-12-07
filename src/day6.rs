@@ -17,22 +17,17 @@ pub fn orbit_parser(input: &str) -> Vec<Orbit> {
 
 #[aoc(day6, part1)]
 pub fn count_orbits(orbits: &Vec<Orbit>) -> usize {
-    let mut orbiting: HashMap<&String, &String> = HashMap::new();
-    let mut orbiters: HashMap<&String, Vec<&String>> = HashMap::new();
+    let mut orbiting: HashMap<&str, &str> = HashMap::new();
+    let mut orbiters: HashMap<&str, Vec<&str>> = HashMap::new();
 
     for orbit in orbits {
         orbiting.insert(&orbit.1, &orbit.0);
         orbiters.entry(&orbit.0).or_default().push(&orbit.1);
     }
-
-    let mut root = &orbits[0].0;
-    while let Some(parent) = orbiting.get(&root) {
-        root = *parent;
-    }
     
     let mut num_orbits = 0;
-    let mut open_list: Vec<(&String, usize)> = Vec::new();
-    open_list.push((root, 0));
+    let mut open_list: Vec<(&str, usize)> = Vec::new();
+    open_list.push(("COM", 0));
 
     while let Some((object, depth)) = open_list.pop() {
         num_orbits += depth;
