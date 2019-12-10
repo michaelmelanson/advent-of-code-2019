@@ -11,7 +11,8 @@ pub fn intcode_parser(input: &str) -> IntcodeProgram {
 #[derive(Debug)]
 pub enum Parameter {
     Position(usize),
-    Immediate(isize)
+    Immediate(isize),
+    Relative(isize)
 }
 
 impl Parameter {
@@ -19,14 +20,16 @@ impl Parameter {
         match mode {
             0 => Parameter::Position(value as usize),
             1 => Parameter::Immediate(value),
+            2 => Parameter::Relative(value),
             _ => unimplemented!()
         }
     }
 
-    pub fn resolve(&self, memory: &IntcodeMemory) -> isize {
+    pub fn resolve(&self, memory: &IntcodeMemory, relative_base: isize) -> isize {
         match self {
             Parameter::Immediate(value) => *value,
-            Parameter::Position(position) => memory[*position]
+            Parameter::Position(position) => memory[*position],
+            Parameter::Relative(position) => memory[(relative_base + *position) as usize],
         }
     }
 }
@@ -41,6 +44,7 @@ pub enum Instruction {
     JumpIfFalse(Parameter, Parameter),
     LessThan(Parameter, Parameter, Parameter),
     Equals(Parameter, Parameter, Parameter),
+    AdjustRelativeBase(Parameter),
     Halt
 }
 
@@ -53,6 +57,7 @@ pub struct Machine {
     memory: IntcodeMemory,
     ip: usize,
     inputs: Vec<isize>,
+    relative_base: isize
 }
 
 impl Machine {
@@ -61,13 +66,18 @@ impl Machine {
             memory: memory.clone(), 
             ip: 0,
             inputs: Vec::new(),
+            relative_base: 0
         }
     }
 
     fn read(&mut self) -> isize {
-        let value = self.memory[self.ip];
+        let value = self.memory.get(self.ip);
         self.ip += 1;
-        value
+        *value.unwrap_or(&0)
+    }
+
+    fn resolve(&self, parameter: &Parameter) -> isize {
+        parameter.resolve(&self.memory, self.relative_base)
     }
 
     fn jump(&mut self, address: usize) {
@@ -83,12 +93,17 @@ impl Machine {
     }
 
     fn write(&mut self, value: isize, parameter: &Parameter) {
-        match parameter {
-            Parameter::Position(position) => {
-                self.memory[*position] = value;
-            },
+        let address = match parameter {
+            Parameter::Position(position) => *position,
+            Parameter::Relative(position) => (self.relative_base + *position) as usize,
             Parameter::Immediate(_) => unimplemented!()
+        };
+
+        if address >= self.memory.len() {
+            self.memory.resize(address+1, 0);
         }
+
+        self.memory[address] = value;
     }
 
     fn next_instruction(&mut self) -> Instruction {
@@ -141,6 +156,10 @@ impl Machine {
                 Parameter::new(third_mode, self.read())
             ),
 
+            9 => Instruction::AdjustRelativeBase(
+                Parameter::new(first_mode, self.read())
+            ),
+
             99 => Instruction::Halt,
             _ => unimplemented!()
         }
@@ -150,17 +169,17 @@ impl Machine {
         let mut action = None;
 
         let instruction = self.next_instruction();
-        
+
         match instruction {
             Instruction::Add(lhs, rhs, output) => {
-                let lhs = lhs.resolve(&self.memory);
-                let rhs = rhs.resolve(&self.memory);
+                let lhs = self.resolve(&lhs);
+                let rhs = self.resolve(&rhs);
                 self.write(lhs + rhs, &output);
             },
 
             Instruction::Multiply(lhs, rhs, output) => {
-                let lhs = lhs.resolve(&self.memory);
-                let rhs = rhs.resolve(&self.memory);
+                let lhs = self.resolve(&lhs);
+                let rhs = self.resolve(&rhs);
                 self.write(lhs * rhs, &output);
             },
 
@@ -170,30 +189,30 @@ impl Machine {
             },
 
             Instruction::Output(value) => {
-                action = Some(Action::Output(value.resolve(&self.memory)));
+                action = Some(Action::Output(self.resolve(&value)));
             }
 
             Instruction::JumpIfTrue(value, target) => {
-                let value = value.resolve(&self.memory);
+                let value = self.resolve(&value);
 
                 if value != 0 {
-                    let target = target.resolve(&self.memory) as usize;
+                    let target = self.resolve(&target) as usize;
                     self.jump(target);
                 }
             },
 
             Instruction::JumpIfFalse(value, target) => {
-                let value = value.resolve(&self.memory);
+                let value = self.resolve(&value);
 
                 if value == 0 {
-                    let target = target.resolve(&self.memory) as usize;
+                    let target = self.resolve(&target) as usize;
                     self.jump(target);
                 }
             },
 
             Instruction::LessThan(lhs, rhs, output) => {
-                let lhs = lhs.resolve(&self.memory);
-                let rhs = rhs.resolve(&self.memory);
+                let lhs = self.resolve(&lhs);
+                let rhs = self.resolve(&rhs);
 
                 if lhs < rhs {
                     self.write(1, &output);
@@ -203,8 +222,8 @@ impl Machine {
             },
 
             Instruction::Equals(lhs, rhs, output) => {
-                let lhs = lhs.resolve(&self.memory);
-                let rhs = rhs.resolve(&self.memory);
+                let lhs = self.resolve(&lhs);
+                let rhs = self.resolve(&rhs);
 
                 if lhs == rhs {
                     self.write(1, &output);
@@ -213,6 +232,10 @@ impl Machine {
                 }
             },
 
+            Instruction::AdjustRelativeBase(diff) => {
+                let diff = self.resolve(&diff);
+                self.relative_base += diff;
+            },
 
             Instruction::Halt => {
                 action = Some(Action::Halt)
