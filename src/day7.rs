@@ -15,6 +15,7 @@ fn execute_amplifier(program: &IntcodeProgram, inputs: &Vec<isize>) -> isize {
 
     loop {
         match machine.run() {
+            Action::RequiresInput => unimplemented!(),
             Action::Output(output) => return output,
             Action::Halt => panic!("Halted without producing output")
         }
@@ -94,30 +95,35 @@ fn execute_amplifier_loop(program: &IntcodeProgram, sequence: &Vec<isize>) -> is
 
     'main: loop {
         let output_a = match amplifier_a.run() {
+            Action::RequiresInput => unimplemented!(),
             Action::Output(output) => output,
             Action::Halt => break 'main
         };
 
         amplifier_b.push_input(output_a);
         let output_b = match amplifier_b.run() {
+            Action::RequiresInput => unimplemented!(),
             Action::Output(output) => output,
             Action::Halt => break 'main
         };
 
         amplifier_c.push_input(output_b);
         let output_c = match amplifier_c.run() {
+            Action::RequiresInput => unimplemented!(),
             Action::Output(output) => output,
             Action::Halt => break 'main
         };
 
         amplifier_d.push_input(output_c);
         let output_d = match amplifier_d.run() {
+            Action::RequiresInput => unimplemented!(),
             Action::Output(output) => output,
             Action::Halt => break 'main
         };
 
         amplifier_e.push_input(output_d);
         let output_e = match amplifier_e.run() {
+            Action::RequiresInput => unimplemented!(),
             Action::Output(output) => output,
             Action::Halt => break 'main
         };

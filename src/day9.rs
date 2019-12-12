@@ -14,6 +14,7 @@ pub fn boost(input: &IntcodeProgram) -> isize {
     
     'main: loop { 
         match machine.run() {
+            Action::RequiresInput => unimplemented!(),
             Action::Output(value) => output.push(value),
             Action::Halt => break 'main
         }
@@ -32,6 +33,7 @@ pub fn sensor_boost(input: &IntcodeProgram) -> isize {
     
     'main: loop { 
         match machine.run() {
+            Action::RequiresInput => unimplemented!(),
             Action::Output(value) => output.push(value),
             Action::Halt => break 'main
         }

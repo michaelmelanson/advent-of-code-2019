@@ -28,8 +28,8 @@ impl Parameter {
     pub fn resolve(&self, memory: &IntcodeMemory, relative_base: isize) -> isize {
         match self {
             Parameter::Immediate(value) => *value,
-            Parameter::Position(position) => memory[*position],
-            Parameter::Relative(position) => memory[(relative_base + *position) as usize],
+            Parameter::Position(position) => *memory.get(*position).unwrap_or(&0),
+            Parameter::Relative(position) => *memory.get((relative_base + *position) as usize).unwrap_or(&0),
         }
     }
 }
@@ -49,6 +49,7 @@ pub enum Instruction {
 }
 
 pub enum Action {
+    RequiresInput,
     Output(isize),
     Halt
 }
@@ -84,8 +85,12 @@ impl Machine {
         self.ip = address;
     }
 
-    fn read_input(&mut self) -> isize {
-        self.inputs.remove(0)
+    fn read_input(&mut self) -> Option<isize> {
+        if self.inputs.len() > 0 {
+            Some(self.inputs.remove(0))
+        } else {
+            None
+        }
     }
 
     pub fn push_input(&mut self, input: isize) {
@@ -184,8 +189,12 @@ impl Machine {
             },
 
             Instruction::Input(output) => {
-                let value = self.read_input();
-                self.write(value, &output);
+                if let Some(value) = self.read_input() {
+                    self.write(value, &output);
+                } else {
+                    action = Some(Action::RequiresInput);
+                    self.ip -= 2;
+                }
             },
 
             Instruction::Output(value) => {
