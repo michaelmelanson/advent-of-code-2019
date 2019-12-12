@@ -93,6 +93,23 @@ pub fn simulate_bodies(bodies: &Vec<Body>) -> isize {
 }
 
 
+// Euclid's two-thousand-year-old algorithm for finding the greatest common
+// divisor.
+fn gcd(x: usize, y: usize) -> usize {
+    let mut x = x;
+    let mut y = y;
+    while y != 0 {
+        let t = y;
+        y = x % y;
+        x = t;
+    }
+    x
+}
+
+fn lcm(x: usize, y: usize) -> usize {
+    x * y / gcd(x, y)
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct AxisBody(isize, isize);
 
@@ -129,12 +146,11 @@ fn axis_cycle_time(bodies: &Vec<AxisBody>) -> usize {
 }
 
 #[aoc(day12, part2)]
-pub fn cycle_time(bodies: &Vec<Body>) -> String {
+pub fn cycle_time(bodies: &Vec<Body>) -> usize {
     let x_time = axis_cycle_time(&bodies.iter().map(|b| AxisBody(b.position.0, b.velocity.0)).collect::<Vec<_>>());
     let y_time = axis_cycle_time(&bodies.iter().map(|b| AxisBody(b.position.1, b.velocity.1)).collect::<Vec<_>>());
     let z_time = axis_cycle_time(&bodies.iter().map(|b| AxisBody(b.position.2, b.velocity.2)).collect::<Vec<_>>());
 
-    // because I'm lazy, just use https://www.calculatorsoup.com/calculators/math/lcm.php
-    format!("lcm({}, {}, {})", x_time, y_time, z_time)
+    lcm(lcm(x_time, y_time), z_time)
 }
 
