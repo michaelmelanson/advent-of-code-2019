@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 
 #[derive(Clone, Debug, Hash)]
 pub struct Body {
@@ -92,3 +91,50 @@ pub fn simulate_bodies(bodies: &Vec<Body>) -> isize {
 
     energy
 }
+
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AxisBody(isize, isize);
+
+fn axis_cycle_time(bodies: &Vec<AxisBody>) -> usize {
+    let starting_state = bodies.clone();
+    let mut bodies = bodies.to_vec();
+
+    let mut t = 0;
+    loop {
+        t += 1;
+
+        for i in 0..bodies.len() {
+            for j in 0..bodies.len() {
+                if i <= j { continue; }
+
+                if bodies[i].0 < bodies[j].0 {
+                    bodies[i].1 += 1;
+                    bodies[j].1 -= 1;
+                } else if bodies[i].0 > bodies[j].0 {
+                    bodies[i].1 -= 1;
+                    bodies[j].1 += 1;
+                }
+            }
+        }
+
+        for body in bodies.iter_mut() {
+            body.0 += body.1;
+        }
+
+        if bodies == starting_state {
+            return t;
+        }
+    }
+}
+
+#[aoc(day12, part2)]
+pub fn cycle_time(bodies: &Vec<Body>) -> String {
+    let x_time = axis_cycle_time(&bodies.iter().map(|b| AxisBody(b.position.0, b.velocity.0)).collect::<Vec<_>>());
+    let y_time = axis_cycle_time(&bodies.iter().map(|b| AxisBody(b.position.1, b.velocity.1)).collect::<Vec<_>>());
+    let z_time = axis_cycle_time(&bodies.iter().map(|b| AxisBody(b.position.2, b.velocity.2)).collect::<Vec<_>>());
+
+    // because I'm lazy, just use https://www.calculatorsoup.com/calculators/math/lcm.php
+    format!("lcm({}, {}, {})", x_time, y_time, z_time)
+}
+
