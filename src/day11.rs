@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::intcode::*;
+use intcode::*;
 
 #[derive(Debug)]
 enum Turn {

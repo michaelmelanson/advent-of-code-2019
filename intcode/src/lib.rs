@@ -3,9 +3,10 @@ pub type IntcodeProgram = Vec<isize>;
 pub type IntcodeMemory = Vec<isize>;
 
 pub fn intcode_parser(input: &str) -> IntcodeProgram {
-    input.split(",")
-        .map(|s| s.parse::<isize>().unwrap())
-        .collect::<IntcodeProgram>()
+    input.trim()
+      .split(",")
+      .map(|s| s.parse::<isize>().unwrap())
+      .collect::<IntcodeProgram>()
 }
 
 #[derive(Debug)]
@@ -97,7 +98,7 @@ impl Machine {
         self.inputs.push(input);
     }
 
-    fn write(&mut self, value: isize, parameter: &Parameter) {
+    pub fn write(&mut self, value: isize, parameter: &Parameter) {
         let address = match parameter {
             Parameter::Position(position) => *position,
             Parameter::Relative(position) => (self.relative_base + *position) as usize,

@@ -1,4 +1,4 @@
-use crate::intcode::*;
+use intcode::*;
 
 #[aoc_generator(day9)]
 pub fn day9_generator(input: &str) -> IntcodeProgram {

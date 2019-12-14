@@ -1,4 +1,4 @@
-use crate::intcode::*;
+use intcode::*;
 
 #[aoc_generator(day5)]
 pub fn day5_generator(input: &str) -> Vec<isize> {
